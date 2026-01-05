@@ -1,0 +1,28 @@
+1. Chạy migration và seeder:
+php artisan migrate --seed
+
+2. Xóa toàn bộ bảng (Drop) -> Chạy lại Migration
+php artisan migrate:fresh --seed
+
+3. Chạy web:
+php artisan serve
+
+
+4. Thực thi lệnh composer install
+
+    4.1. Mở: C:\xampp\php
+    4.2. Kiếm các file có tên: php.ini-development, php.ini-production
+    4.3. Mở bằng notepad
+    4.4. Tìm và bỏ dấu ; các lệnh sau đây:
+        - extension=zip
+        - extension=fileinfo
+        - extension=mbstring
+        - extension=openssl
+        - extension=intl       ; (không bắt buộc, nhưng Laravel hay dùng)
+        - extension=bcmath     ; (một số package cần)
+
+# Clear cache (nếu lỗi view/config)
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear

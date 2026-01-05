@@ -1,0 +1,157 @@
+body {
+    background-color: #f8f9fb;
+}
+
+.qr-table tbody tr {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.qr-table tbody tr.active {
+    background-color: #e7f1ff;
+}
+
+.qr-table tbody tr.loading {
+    opacity: 0.7;
+}
+
+.qr-product-name {
+    max-width: 220px;
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.detail-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px 14px;
+    margin-bottom: 16px;
+}
+
+.detail-summary .label {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.timeline-stepper {
+    display: flex;
+    gap: 12px;
+    padding: 6px 2px 10px;
+    overflow-x: auto;
+}
+
+.timeline-item {
+    min-width: 150px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #dee2e6;
+    background: #fff;
+    box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.02);
+}
+
+.qr-code-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 90px;
+    margin: 0 auto;
+}
+
+.qr-code-cell .qr-img {
+    width: 60px;
+    height: 60px;
+}
+
+.detail-qr {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.detail-qr .qr-img {
+    width: 90px;
+    height: 90px;
+}
+
+.timeline-item .title {
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.timeline-item .time {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.timeline-item .status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.timeline-item.done {
+    border-color: #198754;
+    background: #e9f7ef;
+}
+
+.timeline-item.done .status-dot {
+    background-color: #198754;
+}
+
+.timeline-item.current {
+    border-color: #0d6efd;
+    background: #e7f1ff;
+}
+
+.timeline-item.current .status-dot {
+    background-color: #0d6efd;
+}
+
+.timeline-item.pending {
+    border-color: #ced4da;
+    background: #f8f9fa;
+}
+
+.timeline-item.pending .status-dot {
+    background-color: #ced4da;
+}
+
+.timeline-item.error {
+    border-color: #dc3545;
+    background: #fde2e1;
+}
+
+.timeline-item.error .status-dot {
+    background-color: #dc3545;
+}
+
+.log-table td {
+    vertical-align: middle;
+}
+
+.log-table .status-badge {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+}
+
+.loading-state,
+.error-state,
+.empty-state {
+    text-align: center;
+    color: #6c757d;
+}
+
+.detail-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}

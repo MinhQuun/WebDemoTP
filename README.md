@@ -7,6 +7,41 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## QR Master–Detail Demo
+
+This repo now includes a demo page for “Xem QR đã tạo” with Laravel 12 + MySQL, Blade, and Bootstrap 5. The page lists QR codes on the left and shows timeline/log details on the right via AJAX (no full-page reload).
+
+### Quick start
+1) Configure database in `.env` for MySQL:
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=your_db
+DB_USERNAME=your_user
+DB_PASSWORD=your_pass
+```
+2) Install dependencies and generate the app key:
+```
+composer install
+php artisan key:generate
+```
+3) Run migrations and seed demo data (stages, ~100 QR records, logs with done/error/current statuses):
+```
+php artisan migrate --seed
+```
+4) Serve the app and open http://localhost:8000/admin/qrs
+```
+php artisan serve
+```
+
+### Features
+- Tables: `stages`, `qrs`, `qr_stage_logs` with Eloquent relations.
+- Seeders: `StageSeeder`, `QrSeeder` (randomized data with 10–15% error stages).
+- Routes: `GET /admin/qrs` (list + filters + pagination) and `GET /admin/qrs/{id}/detail` (JSON for detail panel).
+- UI: Blade view at `resources/views/admin/qrs/index.blade.php`, Bootstrap 5 CDN, custom assets in `public/css/admin-qrs.css` and `public/js/admin-qrs.js` (no inline CSS/JS).
+- UX: Click a row to load detail panel (status badge, info, horizontal timeline showing done/current/pending/error, and the log table). Loading/error states included.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
