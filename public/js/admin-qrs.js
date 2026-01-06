@@ -1,28 +1,29 @@
 (() => {
-    const detailUrlTemplate = document.querySelector('meta[name="qr-detail-url"]')?.content || '';
-    const detailModalEl = document.getElementById('qrDetailModal');
-    const detailContent = document.getElementById('qr-detail-content');
+    const detailUrlTemplate =
+        document.querySelector('meta[name="qr-detail-url"]')?.content || "";
+    const detailModalEl = document.getElementById("qrDetailModal");
+    const detailContent = document.getElementById("qr-detail-content");
     let detailModal;
 
-    const escapeHtml = (value = '') =>
+    const escapeHtml = (value = "") =>
         value
             .toString()
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
 
     const formatDateTime = (value) => {
-        if (!value) return '';
+        if (!value) return "";
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) return value;
-        return new Intl.DateTimeFormat('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
+        return new Intl.DateTimeFormat("vi-VN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
             hour12: false,
         }).format(date);
     };
@@ -33,27 +34,31 @@
         }
 
         const statusLabels = {
-            done: 'Hoàn tất',
-            current: 'Đang thực hiện',
-            pending: 'Chưa làm',
-            error: 'Lỗi',
+            done: "Hoàn tất",
+            current: "Đang thực hiện",
+            pending: "Chưa làm",
+            error: "Lỗi",
         };
 
         const html = items
             .map((item) => {
                 const statusText = statusLabels[item.status] || item.status;
-                const time = item.performed_at ? formatDateTime(item.performed_at) : statusText;
+                const time = item.performed_at
+                    ? formatDateTime(item.performed_at)
+                    : statusText;
 
                 return `
                 <div class="timeline-item ${item.status}">
                     <div class="d-flex align-items-center mb-1">
                         <span class="status-dot"></span>
-                        <span class="title">${escapeHtml(item.name || '')}</span>
+                        <span class="title">${escapeHtml(
+                            item.name || ""
+                        )}</span>
                     </div>
                     <div class="time">${escapeHtml(time)}</div>
                 </div>`;
             })
-            .join('');
+            .join("");
 
         return `<div class="timeline-stepper">${html}</div>`;
     };
@@ -64,38 +69,46 @@
         }
 
         const statusClass = {
-            done: 'bg-success-subtle text-success',
-            error: 'bg-danger-subtle text-danger',
-            in_progress: 'bg-warning-subtle text-warning',
+            done: "bg-success-subtle text-success",
+            error: "bg-danger-subtle text-danger",
+            in_progress: "bg-warning-subtle text-warning",
         };
 
         return logs
             .map((log) => {
-                const badgeClass = statusClass[log.status] || 'bg-secondary-subtle text-secondary';
+                const badgeClass =
+                    statusClass[log.status] ||
+                    "bg-secondary-subtle text-secondary";
                 return `
                 <tr>
-                    <td class="text-nowrap">${escapeHtml(formatDateTime(log.performed_at))}</td>
-                    <td>${escapeHtml(log.stage_name || '')}</td>
-                    <td><span class="badge rounded-pill status-badge ${badgeClass}">${escapeHtml(log.status || '')}</span></td>
-                    <td>${escapeHtml(log.quantity ?? '')}</td>
-                    <td>${escapeHtml(log.note || '')}</td>
+                    <td class="text-nowrap">${escapeHtml(
+                        formatDateTime(log.performed_at)
+                    )}</td>
+                    <td>${escapeHtml(log.stage_name || "")}</td>
+                    <td><span class="badge rounded-pill status-badge ${badgeClass}">${escapeHtml(
+                    log.status || ""
+                )}</span></td>
+                    <td>${escapeHtml(log.quantity ?? "")}</td>
+                    <td>${escapeHtml(log.note || "")}</td>
                 </tr>`;
             })
-            .join('');
+            .join("");
     };
 
     const renderDetail = (data) => {
         const qr = data.qr || {};
-        const statusClass = data.has_error ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success';
-        const statusText = data.has_error ? 'Error' : 'OK';
+        const statusClass = data.has_error
+            ? "bg-danger-subtle text-danger"
+            : "bg-success-subtle text-success";
+        const statusText = data.has_error ? "Error" : "OK";
 
         const infoRows = [
-            { label: 'Đơn hàng', value: qr.order_code },
-            { label: 'Mã hàng', value: qr.product_code },
-            { label: 'Tên hàng', value: qr.product_name },
-            { label: 'Máy', value: qr.machine || '—' },
-            { label: 'Ngày tạo', value: formatDateTime(qr.created_at) },
-            { label: 'Người tạo', value: qr.created_by },
+            { label: "Đơn hàng", value: qr.order_code },
+            { label: "Mã hàng", value: qr.product_code },
+            { label: "Tên hàng", value: qr.product_name },
+            { label: "Máy", value: qr.machine || "—" },
+            { label: "Ngày tạo", value: formatDateTime(qr.created_at) },
+            { label: "Người tạo", value: qr.created_by },
         ];
 
         const infoHtml = infoRows
@@ -103,27 +116,39 @@
                 (item) => `
                 <div>
                     <div class="label">${escapeHtml(item.label)}</div>
-                    <div class="fw-semibold">${escapeHtml(item.value || '')}</div>
+                    <div class="fw-semibold">${escapeHtml(
+                        item.value || ""
+                    )}</div>
                 </div>`
             )
-            .join('');
+            .join("");
 
         const timelineHtml = buildTimeline(data.timeline || []);
         const logsHtml = buildLogsTable(data.logs || []);
         const stageProgress =
             data.current_stage_number && data.total_stages
                 ? `${data.current_stage_number}/${data.total_stages}`
-                : '';
+                : "";
 
         return `
             <div class="detail-card">
                 <div class="detail-header">
                     <div class="detail-qr">
-                        <div class="qr-img" id="qr-detail-image" data-qr="${escapeHtml(qr.qr_code || '')}"></div>
+                        <div class="qr-img" id="qr-detail-image" data-qr="${escapeHtml(
+                            qr.qr_code || ""
+                        )}"></div>
                         <div>
-                            <div class="fw-semibold fs-5">${escapeHtml(qr.qr_code || '')}</div>
-                            <div class="text-muted small">${escapeHtml(data.current_stage_name ? `Công đoạn hiện tại: ${data.current_stage_name}` : '')}</div>
-                            <div class="text-muted small">${escapeHtml(stageProgress)}</div>
+                            <div class="fw-semibold fs-5">${escapeHtml(
+                                qr.qr_code || ""
+                            )}</div>
+                            <div class="text-muted small">${escapeHtml(
+                                data.current_stage_name
+                                    ? `Công đoạn hiện tại: ${data.current_stage_name}`
+                                    : ""
+                            )}</div>
+                            <div class="text-muted small">${escapeHtml(
+                                stageProgress
+                            )}</div>
                         </div>
                     </div>
                     <span class="badge ${statusClass}">${statusText}</span>
@@ -158,8 +183,8 @@
     };
 
     const setActiveRow = (row, rows) => {
-        rows.forEach((r) => r.classList.remove('active'));
-        row.classList.add('active');
+        rows.forEach((r) => r.classList.remove("active"));
+        row.classList.add("active");
     };
 
     const showLoading = () => {
@@ -181,33 +206,43 @@
     };
 
     const renderInlineQrs = () => {
-        if (typeof QRCode === 'undefined') {
+        if (typeof QRCode === "undefined") {
             return;
         }
 
-        document.querySelectorAll('.qr-img').forEach((node) => {
-            const text = node.dataset.qr || '';
+        document.querySelectorAll(".qr-img").forEach((node) => {
+            const text = node.dataset.qr || "";
             if (!text) return;
-            if (node.dataset.rendered) return;
+
+            if (node.id === "qr-detail-image") {
+                if (node.dataset.rendered === text) return;
+                node.innerHTML = "";
+            } else if (node.dataset.rendered) {
+                return;
+            }
 
             new QRCode(node, {
                 text,
-                width: node.id === 'qr-detail-image' ? 90 : 60,
-                height: node.id === 'qr-detail-image' ? 90 : 60,
+                width: node.id === "qr-detail-image" ? 90 : 60,
+                height: node.id === "qr-detail-image" ? 90 : 60,
                 margin: 0,
             });
 
-            node.dataset.rendered = '1';
+            node.dataset.rendered = node.id === "qr-detail-image" ? text : "1";
         });
     };
 
-    const loadDetail = async (qrId) => {
-        if (!detailUrlTemplate || !qrId) return;
+    const loadDetail = async (qrText) => {
+        if (!detailUrlTemplate || !qrText) return;
         showLoading();
 
         try {
-            const response = await fetch(detailUrlTemplate.replace(':id', qrId), {
-                headers: { Accept: 'application/json' },
+            const url = detailUrlTemplate.replace(
+                ":id",
+                encodeURIComponent(qrText)
+            );
+            const response = await fetch(url, {
+                headers: { Accept: "application/json" },
             });
 
             if (!response.ok) {
@@ -219,21 +254,21 @@
             renderInlineQrs();
             detailModal?.show();
         } catch (error) {
-            showError(error.message || 'Đã có lỗi xảy ra.');
+            showError(error.message || "Đã có lỗi xảy ra.");
         }
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const rows = Array.from(document.querySelectorAll('.qr-row'));
+    document.addEventListener("DOMContentLoaded", () => {
+        const rows = Array.from(document.querySelectorAll(".qr-row"));
         if (!rows.length) return;
 
         detailModal = detailModalEl ? new bootstrap.Modal(detailModalEl) : null;
         renderInlineQrs();
 
         rows.forEach((row) => {
-            row.addEventListener('click', () => {
+            row.addEventListener("click", () => {
                 setActiveRow(row, rows);
-                loadDetail(row.dataset.qrId);
+                loadDetail(row.dataset.qrText);
             });
         });
     });

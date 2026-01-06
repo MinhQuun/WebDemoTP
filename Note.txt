@@ -7,7 +7,6 @@ php artisan migrate:fresh --seed
 3. Chạy web:
 php artisan serve
 
-
 4. Thực thi lệnh composer install
 
     4.1. Mở: C:\xampp\php
@@ -26,3 +25,29 @@ php artisan cache:clear
 php artisan config:clear
 php artisan route:clear
 php artisan view:clear
+
+
+1. Sửa .env
+DB_CONNECTION=sqlsrv
+DB_HOST=127.0.0.1
+DB_PORT=1433
+DB_DATABASE=TPBS
+DB_USERNAME=laravel_user
+DB_PASSWORD=123456
+
+2. Clear config cache (quan trọng)
+php artisan config:clear
+php artisan cache:clear
+
+(Nếu bạn từng chạy config:cache thì chạy thêm:)
+php artisan config:cache
+
+3. Test bằng Tinker
+php artisan tinker
+>>> DB::select("SELECT 1 AS ok");
+
+Nếu ra ok = 1 ✅ là Laravel đã kết nối được.
+
+Hoặc test lấy bảng:
+DB::select("SELECT TOP 1 * FROM ten_bang");
+

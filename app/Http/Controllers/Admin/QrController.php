@@ -3,115 +3,131 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Qr;
-use App\Models\QrStageLog;
-use App\Models\Stage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class QrController extends Controller
 {
+    private const STAGES = [
+        "T\u{1ea1}o QR",
+        "Ghi nh\u{1ead}n d\u{1ec7}t",
+        "Ki\u{1ec3}m tra d\u{1ec7}t",
+        "Ghi nh\u{1ead}n n\u{1ed1}i l\u{1b0}\u{1edb}i",
+        "Ki\u{1ec3}m tra n\u{1ed1}i l\u{1b0}\u{1edb}i",
+        "Ghi nh\u{1ead}n h\u{1ea5}p l\u{1b0}\u{1edb}i",
+        "Ki\u{1ec3}m tra h\u{1ea5}p l\u{1b0}\u{1edb}i",
+        "Ghi nh\u{1ead}n \u{0111}\u{00f3}ng ki\u{1ec7}n",
+        "Ki\u{1ec3}m tra \u{0111}\u{00f3}ng ki\u{1ec7}n",
+        "Ki\u{1ec3}m tra final",
+        "Xu\u{1ea5}t kho",
+    ];
+
     public function index(Request $request): View
     {
         $filters = [
-            'from_date' => $request->input('from_date'),
-            'to_date' => $request->input('to_date'),
+            'from' => $request->input('from'),
+            'to' => $request->input('to'),
             'keyword' => $request->input('keyword'),
-            'stage_id' => $request->input('stage_id'),
+            'stage' => $request->input('stage', 'all'),
         ];
 
-        $query = Qr::query()
-            ->with('currentStage')
-            ->withExists(['logs as has_error' => function ($q) {
-                $q->where('status', QrStageLog::STATUS_ERROR);
-            }]);
+        $query = DB::table('vw_qr_list');
 
-        if ($filters['from_date']) {
-            $query->whereDate('created_at', '>=', $filters['from_date']);
+        $fromDate = $this->parseDate($filters['from']);
+        if ($fromDate) {
+            $query->where('ngay_tao', '>=', $fromDate->startOfDay());
         }
 
-        if ($filters['to_date']) {
-            $query->whereDate('created_at', '<=', $filters['to_date']);
+        $toDate = $this->parseDate($filters['to']);
+        if ($toDate) {
+            $query->where('ngay_tao', '<=', $toDate->endOfDay());
         }
 
         if ($filters['keyword']) {
             $keyword = '%' . trim($filters['keyword']) . '%';
             $query->where(function ($q) use ($keyword) {
-                $q->where('qr_code', 'like', $keyword)
-                    ->orWhere('order_code', 'like', $keyword)
-                    ->orWhere('product_code', 'like', $keyword)
-                    ->orWhere('product_name', 'like', $keyword);
+                $q->where('qr_text', 'like', $keyword)
+                    ->orWhere('don_hang', 'like', $keyword)
+                    ->orWhere('ma_hang', 'like', $keyword)
+                    ->orWhere('ten_hang', 'like', $keyword)
+                    ->orWhere('ghi_chu', 'like', $keyword)
+                    ->orWhere('nguoi_tao', 'like', $keyword);
             });
         }
 
-        if ($filters['stage_id']) {
-            $query->where('current_stage_id', $filters['stage_id']);
+        if ($filters['stage'] && $filters['stage'] !== 'all') {
+            $query->where('cong_doan_hien_tai', $filters['stage']);
         }
 
-        $qrs = $query->orderByDesc('created_at')->paginate(15)->withQueryString();
-        $stages = Stage::orderBy('sort_order')->get();
+        $qrs = $query->orderByDesc('ngay_tao')->paginate(20)->withQueryString();
 
-        return view('admin.qrs.index', compact('qrs', 'stages', 'filters'));
+        return view('admin.qrs.index', [
+            'qrs' => $qrs,
+            'stages' => self::STAGES,
+            'filters' => $filters,
+        ]);
     }
 
-    public function detail(Qr $qr): JsonResponse
+    public function detail(string $qrText): JsonResponse
     {
-        $qr->load('currentStage');
-        $stages = Stage::orderBy('sort_order')->get();
-        $logs = QrStageLog::with('stage')
-            ->where('qr_id', $qr->id)
-            ->orderBy('performed_at')
-            ->get();
+        $qr = DB::table('vw_qr_list')->where('qr_text', $qrText)->first();
 
-        $timeline = $stages->map(function (Stage $stage) use ($logs, $qr) {
-            $stageLog = $logs->where('stage_id', $stage->id)->sortByDesc('performed_at')->first();
+        if (!$qr) {
+            return response()->json(['message' => 'QR not found'], 404);
+        }
 
-            if ($stageLog && $stageLog->status === QrStageLog::STATUS_ERROR) {
-                $status = 'error';
-            } elseif ($stageLog && $stageLog->status === QrStageLog::STATUS_DONE) {
+        $currentStageIndex = array_search($qr->cong_doan_hien_tai, self::STAGES, true);
+        $timeline = collect(self::STAGES)->map(function (string $stageName, int $index) use ($currentStageIndex) {
+            if ($currentStageIndex !== false && $index < $currentStageIndex) {
                 $status = 'done';
-            } elseif ($qr->current_stage_id === $stage->id) {
+            } elseif ($currentStageIndex !== false && $index === $currentStageIndex) {
                 $status = 'current';
             } else {
                 $status = 'pending';
             }
 
             return [
-                'id' => $stage->id,
-                'name' => $stage->name,
+                'id' => $index + 1,
+                'name' => $stageName,
                 'status' => $status,
-                'performed_at' => $stageLog?->performed_at?->toDateTimeString(),
+                'performed_at' => null,
             ];
         });
 
-        $hasError = $logs->contains(fn (QrStageLog $log) => $log->status === QrStageLog::STATUS_ERROR);
-        $currentStageIndex = $timeline->search(fn ($item) => $item['id'] === $qr->current_stage_id);
-        $totalStages = $stages->count();
+        $createdAt = $this->parseDate($qr->ngay_tao);
 
         return response()->json([
             'qr' => [
-                'id' => $qr->id,
-                'qr_code' => $qr->qr_code,
-                'order_code' => $qr->order_code,
-                'product_code' => $qr->product_code,
-                'product_name' => $qr->product_name,
-                'machine' => $qr->machine,
-                'created_at' => $qr->created_at?->toDateTimeString(),
-                'created_by' => $qr->created_by,
+                'qr_code' => $qr->qr_text,
+                'order_code' => $qr->don_hang,
+                'product_code' => $qr->ma_hang,
+                'product_name' => $qr->ten_hang,
+                'machine' => null,
+                'created_at' => $createdAt?->toDateTimeString(),
+                'created_by' => $qr->nguoi_tao,
             ],
-            'current_stage_name' => $qr->currentStage?->name,
+            'current_stage_name' => $qr->cong_doan_hien_tai,
             'current_stage_number' => $currentStageIndex !== false ? $currentStageIndex + 1 : null,
-            'total_stages' => $totalStages,
-            'has_error' => $hasError,
+            'total_stages' => count(self::STAGES),
+            'has_error' => false,
             'timeline' => $timeline,
-            'logs' => $logs->map(fn (QrStageLog $log) => [
-                'performed_at' => $log->performed_at?->toDateTimeString(),
-                'stage_name' => $log->stage?->name,
-                'status' => $log->status,
-                'quantity' => $log->quantity,
-                'note' => $log->note,
-            ]),
+            'logs' => [],
         ]);
+    }
+
+    private function parseDate(?string $value): ?Carbon
+    {
+        if (!$value) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

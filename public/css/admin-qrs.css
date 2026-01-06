@@ -19,6 +19,10 @@ body {
     max-width: 220px;
 }
 
+.qr-note {
+    max-width: 220px;
+}
+
 .detail-header {
     display: flex;
     justify-content: space-between;
