@@ -33,35 +33,37 @@ class QrController extends Controller
             'stage' => $request->input('stage', 'all'),
         ];
 
-        $query = DB::table('vw_qr_list');
+        $query = DB::table('vw_qr_list as q')
+            ->leftJoin('vw_item_machine as m', DB::raw('CAST(q.ma_hang AS VARCHAR(50))'), '=', 'm.mahang')
+            ->select('q.*', DB::raw('m.may as ten_may'));
 
         $fromDate = $this->parseDate($filters['from']);
         if ($fromDate) {
-            $query->where('ngay_tao', '>=', $fromDate->startOfDay());
+            $query->where('q.ngay_tao', '>=', $fromDate->startOfDay());
         }
 
         $toDate = $this->parseDate($filters['to']);
         if ($toDate) {
-            $query->where('ngay_tao', '<=', $toDate->endOfDay());
+            $query->where('q.ngay_tao', '<=', $toDate->endOfDay());
         }
 
         if ($filters['keyword']) {
             $keyword = '%' . trim($filters['keyword']) . '%';
             $query->where(function ($q) use ($keyword) {
-                $q->where('qr_text', 'like', $keyword)
-                    ->orWhere('don_hang', 'like', $keyword)
-                    ->orWhere('ma_hang', 'like', $keyword)
-                    ->orWhere('ten_hang', 'like', $keyword)
-                    ->orWhere('ghi_chu', 'like', $keyword)
-                    ->orWhere('nguoi_tao', 'like', $keyword);
+                $q->where('q.qr_text', 'like', $keyword)
+                    ->orWhere('q.don_hang', 'like', $keyword)
+                    ->orWhere('q.ma_hang', 'like', $keyword)
+                    ->orWhere('q.ten_hang', 'like', $keyword)
+                    ->orWhere('q.ghi_chu', 'like', $keyword)
+                    ->orWhere('q.nguoi_tao', 'like', $keyword);
             });
         }
 
         if ($filters['stage'] && $filters['stage'] !== 'all') {
-            $query->where('cong_doan_hien_tai', $filters['stage']);
+            $query->where('q.cong_doan_hien_tai', $filters['stage']);
         }
 
-        $qrs = $query->orderByDesc('ngay_tao')->paginate(100)->withQueryString();
+        $qrs = $query->orderByDesc('q.ngay_tao')->paginate(100)->withQueryString();
 
         return view('admin.qrs.index', [
             'qrs' => $qrs,

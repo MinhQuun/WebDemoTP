@@ -30,7 +30,7 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label mb-1">Từ khóa</label>
-                    <input type="text" name="keyword" value="{{ $filters['keyword'] }}" placeholder="QR, Mã hàng, Tên hàng" class="form-control form-control-sm">
+                    <input type="text" name="keyword" value="{{ $filters['keyword'] }}" placeholder="QR, mã hàng, tên hàng" class="form-control form-control-sm">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label mb-1">Công đoạn</label>
@@ -47,13 +47,12 @@
                 </div>
             </form>
 
-            <div class="table-responsive">
+            <div class="table-responsive qr-table-wrap">
                 <table class="table table-hover align-middle mb-0 qr-table">
                     <thead class="table-light">
                     <tr>
                         <th class="text-nowrap text-center">QR</th>
-                        <th class="text-nowrap">Mã hàng</th>
-                        <th>Tên hàng</th>
+                        <th>Mã/Tên hàng</th>
                         <th>Công đoạn</th>
                     </tr>
                     </thead>
@@ -62,6 +61,7 @@
                         @php
                             $stageName = trim($qr->cong_doan_hien_tai ?? '');
                             $currentIndex = ($stageName !== '') ? array_search($stageName, $stages) : false;
+                            $machineName = trim((string) ($qr->ten_may ?? ''));
                         @endphp
                         <tr>
                             <td class="text-center">
@@ -70,10 +70,15 @@
                                     <div class="fw-semibold small">{{ $qr->qr_text }}</div>
                                 </div>
                             </td>
-                            <td class="text-nowrap">{{ $qr->ma_hang }}</td>
                             <td>
-                                <div class="text-truncate qr-product-name" title="{{ $qr->ten_hang }}">
-                                    {{ $qr->ten_hang }}
+                                <div class="product-cell">
+                                    <div class="product-code">{{ $qr->ma_hang }}</div>
+                                    <div class="product-name text-truncate" title="{{ $qr->ten_hang }}">
+                                        {{ $qr->ten_hang }}
+                                    </div>
+                                    <div class="product-machine">
+                                        Máy: {{ $machineName !== '' ? $machineName : '(chưa có)' }}
+                                    </div>
                                 </div>
                             </td>
                             <td>
@@ -95,7 +100,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="text-center text-muted py-4">Chưa có dữ liệu từ view vw_qr_list.</td>
+                            <td colspan="3" class="text-center text-muted py-4">Chưa có dữ liệu từ view vw_qr_list.</td>
                         </tr>
                     @endforelse
                     </tbody>
