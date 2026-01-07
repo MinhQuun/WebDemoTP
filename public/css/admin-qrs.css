@@ -3,16 +3,17 @@ body {
 }
 
 .qr-table tbody tr {
-    cursor: pointer;
-    transition: background-color 0.15s ease;
+    cursor: default;
 }
 
-.qr-table tbody tr.active {
-    background-color: #e7f1ff;
+.qr-table {
+    font-size: 0.85rem;
 }
 
-.qr-table tbody tr.loading {
-    opacity: 0.7;
+.qr-table th,
+.qr-table td {
+    padding: 0.45rem 0.55rem;
+    vertical-align: top;
 }
 
 .qr-product-name {
@@ -23,6 +24,44 @@ body {
     max-width: 220px;
 }
 
+.stage-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 320px;
+}
+
+.stage-chip {
+    font-size: 0.65rem;
+    line-height: 1.1;
+    padding: 4px 6px;
+    border-radius: 999px;
+    border: 1px solid #ced4da;
+    background: #f8f9fa;
+    color: #495057;
+    text-align: center;
+}
+
+.stage-chip.stage-done {
+    background: #a3cfbb;
+    border-color: #198754;
+    color: #0a3622;
+    font-weight: 500;
+}
+
+.stage-chip.stage-current {
+    background: #ffecb5;
+    border-color: #ffc107;
+    color: #664d03;
+    font-weight: 700;
+    box-shadow: 0 0 4px rgba(255, 193, 7, 0.4);
+}
+
+.stage-chip.stage-pending {
+    background: #e9ecef;
+    border-color: #ced4da;
+    color: #6c757d;
+}
 .detail-header {
     display: flex;
     justify-content: space-between;

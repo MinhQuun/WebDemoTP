@@ -1,0 +1,115 @@
+## 1. Chốt “bảng gốc” để bám theo: `dbo.Tickets`
+
+- Mục tiêu của web “Xem QR đã tạo” là lấy danh sách QR theo mã ticket/QR.
+- Mình xác định `dbo.Tickets` là bảng đúng vì nó có các field trùng với nghiệp vụ QR:
+  + `ticketid, sodh (số đơn), mahang (mã hàng), ngaytao, ...` + các cột trạng thái công đoạn (`ghinhandet`, `kiemtradet`, …).
+- Vấn đề: **Tickets không có `tenhang`** ⇒ muốn hiển thị “Tên hàng” trên web thì phải **join qua bảng khác** theo `mahang`.
+
+---
+
+## 2. Quét toàn DB để tìm bảng nào “có vẻ” chứa Tên hàng
+
+**Logic**: tìm các bảng có cột kiểu:
+
+* khóa sản phẩm: `mahang` / `product` / `item`
+* tên sản phẩm: `tenhang` / `tensp` / `itemname` / `productname` / `name`
+
+**Cách làm**: query metadata (`sys.tables`, `sys.columns`, `sys.schemas`) rồi gom danh sách cột mỗi bảng (dùng `STRING_AGG`).
+
+👉 Output bước này cho bạn một danh sách bảng + các cột của nó, để khoanh vùng “ứng viên”.
+
+---
+
+## 3. Tìm “bảng ứng viên thật sự” bằng cách test **một mã hàng cụ thể**
+
+Bạn lấy một `mahang` mẫu từ Tickets (ví dụ `3215045`) rồi chạy bước “auto dò”:
+
+**Logic**:
+
+* Từ danh sách ứng viên, chạy dynamic SQL:
+
+  * với mỗi bảng: `COUNT(*)` những dòng có `mahang = @v`
+  * đồng thời lấy thử 1 `tenhang` mẫu (nếu có)
+* Lưu kết quả vào bảng tạm (#found) để xem bảng nào match.
+
+**Kết quả**: tìm ra 2 bảng khớp và trả được `tenhang`:
+
+* `dbo.tbdongkien`
+* `dbo.tblphieugiaohang`
+
+=> Ý nghĩa: **Tên hàng nằm ở các bảng nghiệp vụ/công đoạn**, không nằm trong Tickets.
+
+---
+
+## 4. Kiểm tra rủi ro “join bị nhân bản” (1 mahang có nhiều tenhang?)
+
+Khi thấy có 2 bảng có thể map `mahang -> tenhang`, mình kiểm tra xem:
+
+* mỗi bảng có bị trùng `mahang` không (1 mã hàng xuất hiện nhiều dòng)
+* nếu trùng thì join sẽ làm **Tickets bị nở dòng** (row multiplication)
+
+**Cách check**: `GROUP BY mahang HAVING COUNT(*) > 1` (lấy top các mã trùng nhiều).
+
+Kết quả bạn thấy:
+
+* có các `mahang` xuất hiện rất nhiều lần trong từng bảng ⇒ chắc chắn không thể join “thẳng” mà không xử lý.
+
+---
+
+## 5. Hợp nhất & “chuẩn hóa” map `mahang -> tenhang` bằng VIEW
+
+Đây là phần quan trọng nhất của toàn bộ xử lý SQL:
+
+**Mục tiêu**: tạo một nguồn duy nhất, đảm bảo:
+
+* mỗi `mahang` chỉ ra **1 dòng tenhang**
+* ưu tiên bảng nào đúng nghiệp vụ (vd ưu tiên bảng “đóng kiện” hoặc “phiếu giao hàng” tùy logic)
+* nếu 1 mahang có nhiều dòng thì chọn “dòng đại diện” theo rule (thường là dòng mới nhất theo ngày, hoặc theo mức ưu tiên bảng)
+
+👉 Nên tạo view kiểu `vw_item_name` (tên bạn đang dùng) với tư duy:
+
+* UNION nguồn từ 2 bảng:
+
+  * nguồn A: `tbdongkien (mahang, tenhang, …)`
+  * nguồn B: `tblphieugiaohang (mahang, tenhang, …)`
+* Dùng `ROW_NUMBER() OVER (PARTITION BY mahang ORDER BY <priority>, <date desc>)`
+  để lấy **rn = 1** ⇒ mỗi `mahang` chỉ còn 1 record.
+
+=> `vw_item_name` trở thành “bảng từ điển” để join.
+
+---
+
+## 6. Join Tickets với `vw_item_name` để ra “Tên hàng” (không nở dòng)
+
+Sau khi có view map chuẩn, mình join:
+
+* `Tickets t`
+* `vw_item_name n ON n.mahang = t.mahang`
+* (và bạn còn join `Admins` để ra tên người tạo, nếu cần)
+
+Rồi test bằng `SELECT TOP 50 ...` để thấy:
+
+* `ngaytao, ticketid, sodh, mahang, tenhang, dongia...` hiển thị đúng.
+
+---
+
+## 7. Xác nhận join “an toàn” bằng so sánh số dòng
+
+Đây là bước xác nhận rất quan trọng:
+
+* `tickets_rows = COUNT(*) FROM dbo.Tickets`
+* `joined_rows = COUNT(*) FROM dbo.Tickets t LEFT JOIN dbo.vw_item_name n ...`
+
+Nếu `joined_rows == tickets_rows` ⇒ join **không làm nở dữ liệu**, an toàn để đưa lên web.
+
+Bạn đã chạy và ra **bằng nhau** (398,160) ⇒ OK.
+
+---
+
+# Tóm gọn 1 câu
+
+**Tickets là bảng gốc của QR nhưng thiếu tên hàng → quét metadata để tìm bảng có `tenhang` → test 1 `mahang` để tìm đúng bảng nguồn → vì dữ liệu trùng nhiều dòng nên tạo view chuẩn hóa `mahang -> tenhang` (ROW_NUMBER lấy 1 dòng) → join Tickets với view → kiểm tra rowcount để đảm bảo không nở dòng.**
+
+---
+
+Nếu bạn muốn, mình có thể viết lại thành **một đoạn “note kỹ thuật” 10–15 dòng** để bạn copy dán vào README / báo cáo cho anh hướng dẫn (giọng văn chuyên nghiệp, ngắn gọn).

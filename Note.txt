@@ -26,6 +26,8 @@ php artisan config:clear
 php artisan route:clear
 php artisan view:clear
 
+php artisan optimize:clear
+
 
 1. Sửa .env
 DB_CONNECTION=sqlsrv

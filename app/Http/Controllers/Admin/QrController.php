@@ -12,17 +12,16 @@ use Illuminate\View\View;
 class QrController extends Controller
 {
     private const STAGES = [
-        "T\u{1ea1}o QR",
-        "Ghi nh\u{1ead}n d\u{1ec7}t",
-        "Ki\u{1ec3}m tra d\u{1ec7}t",
-        "Ghi nh\u{1ead}n n\u{1ed1}i l\u{1b0}\u{1edb}i",
-        "Ki\u{1ec3}m tra n\u{1ed1}i l\u{1b0}\u{1edb}i",
-        "Ghi nh\u{1ead}n h\u{1ea5}p l\u{1b0}\u{1edb}i",
-        "Ki\u{1ec3}m tra h\u{1ea5}p l\u{1b0}\u{1edb}i",
-        "Ghi nh\u{1ead}n \u{0111}\u{00f3}ng ki\u{1ec7}n",
-        "Ki\u{1ec3}m tra \u{0111}\u{00f3}ng ki\u{1ec7}n",
-        "Ki\u{1ec3}m tra final",
-        "Xu\u{1ea5}t kho",
+        'Ghi nhận thông tin dệt lưới',
+        'Kiểm tra chất lượng dệt lưới',
+        'Ghi nhận thông tin sửa nối lưới',
+        'Kiểm tra sửa nối lưới',
+        'Ghi nhận thông tin hấp lưới',
+        'Kiểm tra hấp lưới',
+        'Đóng kiện',
+        'Kiểm tra đóng kiện',
+        'Kiểm tra final',
+        'Ghi nhận xuất kho',
     ];
 
     public function index(Request $request): View
@@ -62,7 +61,7 @@ class QrController extends Controller
             $query->where('cong_doan_hien_tai', $filters['stage']);
         }
 
-        $qrs = $query->orderByDesc('ngay_tao')->paginate(20)->withQueryString();
+        $qrs = $query->orderByDesc('ngay_tao')->paginate(100)->withQueryString();
 
         return view('admin.qrs.index', [
             'qrs' => $qrs,
